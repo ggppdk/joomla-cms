@@ -1316,8 +1316,7 @@ class JApplicationWebTest extends TestCase
 
 		$this->assertEquals(
 			array(
-				array('name' => 'foo', 'value' => 'bar'),
-				array('name' => 'foo', 'value' => 'car')
+				array('name' => 'foo', 'value' => 'bar')
 			),
 			TestReflection::getValue($this->class, 'response')->headers
 		);
