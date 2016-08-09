@@ -12,7 +12,7 @@ defined('JPATH_BASE') or die;
 $name = $displayData;
 
 ?>
-<div class="toggle-editor btn-toolbar pull-right clearfix">
+<div class="toggle-editor btn-toolbar pull-left clearfix">
 	<div class="btn-group">
 		<a class="btn" href="#"
 			onclick="tinyMCE.execCommand('mceToggleEditor', false, '<?php echo $name; ?>');return false;"
