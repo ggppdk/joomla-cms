@@ -844,7 +844,7 @@ class PlgEditorTinymce extends JPlugin
 		function tinymce_setInitialWidth_".$id."(editor)
 		{
 			jQuery('iframe#".$id."_ifr').closest('.editor').find('.mce-container.mce-panel').first().css({ 'width': '".$width."' });
-			jQuery('iframe#".$id."_ifr').css({ 'width': '".$width."' });
+			jQuery('iframe#".$id."_ifr').css({ 'width': '100%' });
 		}
 
 		tinymce.init({
