@@ -20,7 +20,7 @@
 			type="integer"
 			label="COM_INSTALLER_CACHETIMEOUT_LABEL"
 			description="COM_INSTALLER_CACHETIMEOUT_DESC"
-			first="0"
+			first="1"
 			last="24"
 			step="1"
 			default="6" />
