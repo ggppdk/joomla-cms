@@ -840,7 +840,15 @@ class PlgEditorTinymce extends JPlugin
 		window.getSize = window.getSize || function(){return {x: jQuery(window).width(), y: jQuery(window).height()};};
 		tinymce.suffix = '.min';
 		tinymce.baseURL = '" . JUri::root() . "media/editors/tinymce';
+
+		function tinymce_setInitialWidth_".$id."(editor)
+		{
+			jQuery('iframe#".$id."_ifr').closest('.editor').find('.mce-container.mce-panel').first().css({ 'width': '".$width."' });
+			jQuery('iframe#".$id."_ifr').css({ 'width': '".$width."' });
+		}
+
 		tinymce.init({
+			init_instance_callback : tinymce_setInitialWidth_".$id.",
 		";
 
 		// General
@@ -993,8 +1001,7 @@ class PlgEditorTinymce extends JPlugin
 		$textarea->height  = $height;
 		$textarea->content = $content;
 
-	        $cssWidth  = ($textarea->width) ? ' style="width: ' . (int) $textarea->width . 'px"' : '';
-	        $editor = '<div class="editor"' . $cssWidth . '>';
+	        $editor = '<div class="editor">';
 		$editor .= JLayoutHelper::render('joomla.tinymce.textarea', $textarea);
 		$editor .= $this->_toogleButton($id);
 		$editor .= '</div>';
