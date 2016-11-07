@@ -141,4 +141,16 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	{
 		return ' RAND() ';
 	}
+
+	/**
+	 * Return number of the current row, starting from 1
+	 *
+	 * @return  string  Returns sql expression
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 */
+	public function row_number()
+	{
+		return '(SELECT @a := @a + 1 FROM (SELECT @a := 0) ' . $this->quoteName('row_init') . ')';
+	}
 }

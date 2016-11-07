@@ -1796,4 +1796,19 @@ abstract class JDatabaseQuery
 
 		return $this;
 	}
+
+	/**
+	 * Return number of the current row, starting from 1
+	 *
+	 * Usage:
+	 * $query->select($query->row_number() . ' AS ' . $db->quoteName('ordering'))
+	 *
+	 * @return  string  Returns sql expression
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 */
+	public function row_number()
+	{
+		return 'ROW_NUMBER() OVER ()';
+	}
 }

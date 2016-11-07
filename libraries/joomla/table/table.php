@@ -1354,43 +1354,39 @@ abstract class JTable extends JObject implements JObservableInterface, JTableInt
 			throw new UnexpectedValueException(sprintf('%s does not support ordering.', get_class($this)));
 		}
 
-		$k = $this->_tbl_key;
+		$innerOn      = [];
+		$rowNumberCol = $this->_db->quoteName('row_number');
 
-		// Get the primary keys and ordering values for the selection.
 		$query = $this->_db->getQuery(true)
-			->select(implode(',', $this->_tbl_keys) . ', ordering')
+			->update($this->_tbl)
+			->set('ordering = sq.' . $rowNumberCol);
+
+		$subquery = $this->_db->getQuery(true)
+			->select($query->row_number() . ' AS ' . $rowNumberCol)
 			->from($this->_tbl)
-			->where('ordering >= 0')
 			->order('ordering');
+
+		// Get the primary keys for the selection.
+		foreach ($this->_tbl_keys as $i => $k)
+		{
+			$subquery->select($this->_db->quoteName($k, 'pk__' . $i));
+			$innerOn[] = $this->_db->quoteName($k) . ' = sq.' . $this->_db->quoteName('pk__' . $i);
+		}
 
 		// Setup the extra where and ordering clause data.
 		if ($where)
 		{
+			$subquery->where($where);
 			$query->where($where);
 		}
 
-		$this->_db->setQuery($query);
-		$rows = $this->_db->loadObjectList();
+		$subquery->where('ordering >= 0');
+		$query->where('ordering >= 0');
 
-		// Compact the ordering values.
-		foreach ($rows as $i => $row)
-		{
-			// Make sure the ordering is a positive integer.
-			if ($row->ordering >= 0)
-			{
-				// Only update rows that are necessary.
-				if ($row->ordering != $i + 1)
-				{
-					// Update the row ordering field.
-					$query->clear()
-						->update($this->_tbl)
-						->set('ordering = ' . ($i + 1));
-					$this->appendPrimaryKeys($query, $row);
-					$this->_db->setQuery($query);
-					$this->_db->execute();
-				}
-			}
-		}
+		$query->innerjoin('(' . (string) $subquery . ') AS sq ON ' . implode(' AND ', $innerOn));
+
+		$this->_db->setQuery($query);
+		$this->_db->execute();
 
 		return true;
 	}
