@@ -1354,7 +1354,7 @@ abstract class JTable extends JObject implements JObservableInterface, JTableInt
 			throw new UnexpectedValueException(sprintf('%s does not support ordering.', get_class($this)));
 		}
 
-		$innerOn      = [];
+		$innerOn      = array();
 		$rowNumberCol = $this->_db->quoteName('row_number');
 
 		$query = $this->_db->getQuery(true)
