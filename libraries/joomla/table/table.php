@@ -1383,7 +1383,7 @@ abstract class JTable extends JObject implements JObservableInterface, JTableInt
 		$subquery->where('ordering >= 0');
 		$query->where('ordering >= 0');
 
-		$query->innerjoin('(' . (string) $subquery . ') AS sq ON ' . implode(' AND ', $innerOn));
+		$query->innerJoin('(' . (string) $subquery . ') AS sq ON ' . implode(' AND ', $innerOn));
 
 		$this->_db->setQuery($query);
 		$this->_db->execute();
