@@ -123,6 +123,11 @@ class JDatabaseQueryPostgresql extends JDatabaseQuery implements JDatabaseQueryL
 
 				if ($this->join)
 				{
+					$tmpFrom     = $this->from;
+					$tmpWhere    = $this->where;
+					$this->from  = null;
+					$this->where = null;
+
 					$onWord = ' ON ';
 
 					// Workaround for special case of JOIN with UPDATE
@@ -136,10 +141,15 @@ class JDatabaseQueryPostgresql extends JDatabaseQuery implements JDatabaseQueryL
 						$this->where($joinArray[1]);
 					}
 
-					$query .= (string) $this->from;
-				}
+					$this->where((string) $tmpWhere->setName('()'));
 
-				if ($this->where)
+					$query .= (string) $this->from;
+					$query .= (string) $this->where;
+
+					$this->from  = $tmpFrom;
+					$this->where = $tmpWhere;
+				}
+				elseif ($this->where)
 				{
 					$query .= (string) $this->where;
 				}
