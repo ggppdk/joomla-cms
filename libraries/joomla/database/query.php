@@ -1801,14 +1801,23 @@ abstract class JDatabaseQuery
 	 * Return number of the current row, starting from 1
 	 *
 	 * Usage:
-	 * $query->select($query->row_number() . ' AS ' . $db->quoteName('ordering'))
+	 * $query->select('id, ordering');
+	 * $query->windowRowNumber('ordering', 'new_ordering');
+	 * $query->order('id'); // optional
 	 *
-	 * @return  string  Returns sql expression
+	 * @param   mixed  $columns  A string or array of ordering columns for window function.
+	 * @param   mixed  $as       The AS query part associated to generated column.
+	 *                           If is null there will not be any AS part for generated column.
+	 *
+	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
 	 */
-	public function row_number()
+	public function windowRowNumber($columns, $as = null)
 	{
-		return 'ROW_NUMBER() OVER ()';
+		$column = 'ROW_NUMBER() OVER (' . (string) new JDatabaseQueryElement('ORDER BY', $columns) . ')';
+		$this->select($column . ($as === null ? '' : ' AS ' . $as));
+
+		return $this;
 	}
 }

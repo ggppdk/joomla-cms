@@ -29,6 +29,39 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	protected $limit;
 
 	/**
+	 * @var    JDatabaseQueryElement  The windowOrder element.
+	 * @since  __DEPLOY_VERSION__
+	 */
+	protected $windowOrder = null;
+
+	/**
+	 * Magic function to convert the query to a string.
+	 *
+	 * @return  string  The completed query.
+	 *
+	 * @since   11.1
+	 */
+	public function __toString()
+	{
+		if ($this->windowOrder)
+		{
+			$tmpOrder    = $this->order;
+			$this->order = $this->windowOrder;
+			$query       = parent::__toString();
+			$this->order = $tmpOrder;
+
+			if ($this->order)
+			{
+				return 'SELECT * FROM (' . $query . ') window' . (string) $this->order;
+			}
+
+			return $query;
+		}
+
+		return parent::__toString();
+	}
+
+	/**
 	 * Method to modify a query already in string format with the needed
 	 * additions to make the query limited to a particular number of
 	 * results, or start at a particular offset.
@@ -145,12 +178,23 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	/**
 	 * Return number of the current row, starting from 1
 	 *
-	 * @return  string  Returns sql expression
+	 * @param   mixed  $columns  A string or array of ordering columns.
+	 * @param   mixed  $as       The AS query part associated to generated column.
+	 *                           If is null there will not be any AS part for generated column.
+	 *
+	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
 	 */
-	public function row_number()
+	public function windowRowNumber($columns, $as = null)
 	{
-		return '(SELECT @a := @a + 1 FROM (SELECT @a := 0) ' . $this->quoteName('row_init') . ')';
+		$column = '(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS ' . $this->quoteName('row_init') . ')';
+
+		// Special element to emulate ROW_NUMBER OVER (ORDER BY ...)
+		$this->windowOrder = new JDatabaseQueryElement('ORDER BY', $columns);
+
+		$this->select($column . ($as === null ? '' : ' AS ' . $as));
+
+		return $this;
 	}
 }

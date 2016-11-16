@@ -1354,17 +1354,15 @@ abstract class JTable extends JObject implements JObservableInterface, JTableInt
 			throw new UnexpectedValueException(sprintf('%s does not support ordering.', get_class($this)));
 		}
 
-		$innerOn      = array();
-		$rowNumberCol = $this->_db->quoteName('row_number');
+		$subquery = $this->_db->getQuery(true)
+			->from($this->_tbl)
+			->windowRowNumber('ordering', 'new_ordering');
 
 		$query = $this->_db->getQuery(true)
 			->update($this->_tbl)
-			->set('ordering = sq.' . $rowNumberCol);
+			->set('ordering = sq.new_ordering');
 
-		$subquery = $this->_db->getQuery(true)
-			->select($query->row_number() . ' AS ' . $rowNumberCol)
-			->from($this->_tbl)
-			->order('ordering');
+		$innerOn = array();
 
 		// Get the primary keys for the selection.
 		foreach ($this->_tbl_keys as $i => $k)
