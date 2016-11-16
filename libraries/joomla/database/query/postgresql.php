@@ -124,9 +124,8 @@ class JDatabaseQueryPostgresql extends JDatabaseQuery implements JDatabaseQueryL
 				if ($this->join)
 				{
 					$tmpFrom     = $this->from;
-					$tmpWhere    = $this->where;
+					$tmpWhere    = clone $this->where;
 					$this->from  = null;
-					$this->where = null;
 
 					$onWord = ' ON ';
 
@@ -140,8 +139,6 @@ class JDatabaseQueryPostgresql extends JDatabaseQuery implements JDatabaseQueryL
 						$this->from($joinArray[0]);
 						$this->where($joinArray[1]);
 					}
-
-					$this->where((string) $tmpWhere->setName('()'));
 
 					$query .= (string) $this->from;
 					$query .= (string) $this->where;
