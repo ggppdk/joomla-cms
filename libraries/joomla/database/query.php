@@ -1815,7 +1815,7 @@ abstract class JDatabaseQuery
 	 */
 	public function windowRowNumber($columns, $as = null)
 	{
-		$column = 'ROW_NUMBER() OVER (' . (string) new JDatabaseQueryElement('ORDER BY', $columns) . ')';
+		$column = 'ROW_NUMBER() OVER (' . ltrim((string) new JDatabaseQueryElement('ORDER BY', $columns)) . ')';
 		$this->select($column . ($as === null ? '' : ' AS ' . $as));
 
 		return $this;
