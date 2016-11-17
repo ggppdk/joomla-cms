@@ -101,4 +101,38 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 			$this->equalTo($expected)
 		);
 	}
+
+	/**
+	 * Test for the JDatabaseQuery::__string method for a 'update' case.
+	 *
+	 * @return  void
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 */
+	public function test__toStringUpdate()
+	{
+		$q = new JDatabaseQuerySqlsrv($this->dbo);
+
+		$q->update('#__foo AS a')
+			->join('INNER', 'b ON b.id = a.id')
+			->set('a.id = 2')
+			->where('b.id = 1');
+
+		$string = (string) $q;
+
+		$this->assertEquals(
+			PHP_EOL . "UPDATE a" .
+			PHP_EOL . "SET a.id = 2" .
+			PHP_EOL . "FROM #__foo AS a" .
+			PHP_EOL . "INNER JOIN b ON b.id = a.id" .
+			PHP_EOL . "WHERE b.id = 1",
+			$string
+		);
+
+		// Run method __toString() again on the same query
+		$this->assertEquals(
+			$string,
+			(string) $q
+		);
+	}
 }
