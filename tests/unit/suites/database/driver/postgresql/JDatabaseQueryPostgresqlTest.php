@@ -197,13 +197,18 @@ class JDatabaseQueryPostgresqlTest extends TestCase
 			->set('a.id = 2')
 			->where('b.id = 1');
 
+		$string = (string) $q;
+
 		$this->assertEquals(
 			PHP_EOL . "UPDATE #__foo AS a" .
 			PHP_EOL . "SET a.id = 2" .
 			PHP_EOL . "FROM b" .
 			PHP_EOL . "WHERE b.id = 1 AND b.id = a.id",
-			(string) $q
+			$string
 		);
+
+		// Run method __toString() again on the same query
+		$this->assertTrue($string === (string) $q);
 	}
 
 	/**
