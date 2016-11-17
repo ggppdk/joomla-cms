@@ -208,7 +208,10 @@ class JDatabaseQueryPostgresqlTest extends TestCase
 		);
 
 		// Run method __toString() again on the same query
-		$this->assertTrue($string === (string) $q);
+		$this->assertEquals(
+			$string,
+			(string) $q
+		);
 	}
 
 	/**
