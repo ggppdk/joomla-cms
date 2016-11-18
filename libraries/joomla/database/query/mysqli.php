@@ -52,13 +52,36 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 
 			if ($this->order)
 			{
-				return 'SELECT * FROM (' . $query . ') window' . (string) $this->order;
+				return PHP_EOL . "SELECT * FROM ( $query ) AS " . $this->quoteName('window') . (string) $this->order;
 			}
 
 			return $query;
 		}
 
 		return parent::__toString();
+	}
+
+	/**
+	 * Clear data from the query or a specific clause of the query.
+	 *
+	 * @param   string  $clause  Optionally, the name of the clause to clear, or nothing to clear the whole query.
+	 *
+	 * @return  JDatabaseQuery  Returns this object to allow chaining.
+	 *
+	 * @since   11.1
+	 */
+	public function clear($clause = null)
+	{
+		$tmpSelect = $this->select;
+
+		parent::clear($clause);
+
+		if ($tmpSelect !== $this->select)
+		{
+			$this->windowOrder = null;
+		}
+
+		return $this;
 	}
 
 	/**

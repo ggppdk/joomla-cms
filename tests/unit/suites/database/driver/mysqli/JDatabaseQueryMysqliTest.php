@@ -8,13 +8,13 @@
  */
 
 /**
- * Test class for JDatabaseQuerySqlsrv.
+ * Test class for JDatabaseQueryMysqli.
 *
 * @package     Joomla.UnitTest
 * @subpackage  Database
-* @since       11.3
+* @since       __DEPLOY_VERSION__
 */
-class JDatabaseQuerySqlsrvTest extends TestCase
+class JDatabaseQueryMysqliTest extends TestCase
 {
 	/**
 	 * @var    JDatabaseDriver  A mock of the JDatabaseDriver object for testing purposes.
@@ -25,7 +25,7 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 	/**
 	 * The instance of the object to test.
 	 *
-	 * @var    JDatabaseQuerySqlsrv
+	 * @var    JDatabaseQueryMysqli
 	 * @since  12.3
 	 */
 	private $_instance;
@@ -45,7 +45,7 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 
 		$this->dbo = $this->getMockDatabase();
 
-		$this->_instance = new JDatabaseQuerySqlsrv($this->dbo);
+		$this->_instance = new JDatabaseQueryMysqli($this->dbo);
 	}
 
 	/**
@@ -65,45 +65,7 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 	}
 
 	/**
-	 * Data for the testDateAdd test.
-	 *
-	 * @return  array
-	 *
-	 * @since   13.1
-	 */
-	public function seedDateAdd()
-	{
-		return array(
-			// date, interval, datepart, expected
-			'Add date'			=> array('2008-12-31', '1', 'day', "DATEADD('day', '1', '2008-12-31')"),
-			'Subtract date'		=> array('2008-12-31', '-1', 'day', "DATEADD('day', '-1', '2008-12-31')"),
-			'Add datetime'		=> array('2008-12-31 23:59:59', '1', 'day', "DATEADD('day', '1', '2008-12-31 23:59:59')"),
-		);
-	}
-
-	/**
-	 * Tests the JDatabaseQuerySqlsrv::dateAdd method
-	 *
-	 * @param   datetime  $date      The date or datetime to add to.
-	 * @param   string    $interval  The maximum length of the text.
-	 * @param   string    $datePart  The part of the date to be added to (such as day or micosecond)
-	 * @param   string    $expected  The expected result.
-	 *
-	 * @return  void
-	 *
-	 * @dataProvider  seedDateAdd
-	 * @since   13.1
-	 */
-	public function testDateAdd($date, $interval, $datePart, $expected)
-	{
-		$this->assertThat(
-			$this->_instance->dateAdd($date, $interval, $datePart),
-			$this->equalTo($expected)
-		);
-	}
-
-	/**
-	 * Test for the JDatabaseQuerySqlsrv::__string method for a 'windowRowNumber' case.
+	 * Test for the JDatabaseQueryMysqli::__string method for a 'windowRowNumber' case.
 	 *
 	 * @return  void
 	 *
@@ -119,9 +81,10 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 			->where('catid = 1');
 
 		$this->assertEquals(
-			PHP_EOL . "SELECT id,ordering,ROW_NUMBER() OVER (ORDER BY ordering)" .
+			PHP_EOL . "SELECT id,ordering,(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS `row_init`)" .
 			PHP_EOL . "FROM a" .
-			PHP_EOL . "WHERE catid = 1",
+			PHP_EOL . "WHERE catid = 1" .
+			PHP_EOL . "ORDER BY ordering",
 			(string) $this->_instance
 		);
 
@@ -133,9 +96,11 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 			->order('id');
 
 		$this->assertEquals(
-			PHP_EOL . "SELECT id,ordering,ROW_NUMBER() OVER (ORDER BY ordering) AS row_number" .
+			PHP_EOL . "SELECT * FROM ( " .
+			PHP_EOL . "SELECT id,ordering,(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS `row_init`) AS row_number" .
 			PHP_EOL . "FROM a" .
 			PHP_EOL . "WHERE catid = 1" .
+			PHP_EOL . "ORDER BY ordering ) AS `window`" .
 			PHP_EOL . "ORDER BY id",
 			(string) $this->_instance
 		);
@@ -172,10 +137,9 @@ class JDatabaseQuerySqlsrvTest extends TestCase
 		$string = (string) $this->_instance;
 
 		$this->assertEquals(
-			PHP_EOL . "UPDATE a" .
-			PHP_EOL . "SET a.id = 2" .
-			PHP_EOL . "FROM #__foo AS a" .
+			PHP_EOL . "UPDATE #__foo AS a" .
 			PHP_EOL . "INNER JOIN b ON b.id = a.id" .
+			PHP_EOL . "SET a.id = 2" .
 			PHP_EOL . "WHERE b.id = 1",
 			$string
 		);
