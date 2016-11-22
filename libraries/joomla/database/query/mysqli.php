@@ -29,12 +29,6 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	protected $limit;
 
 	/**
-	 * @var    JDatabaseQueryElement  The windowOrder element.
-	 * @since  __DEPLOY_VERSION__
-	 */
-	protected $windowOrder = null;
-
-	/**
 	 * Magic function to convert the query to a string.
 	 *
 	 * @return  string  The completed query.
@@ -208,14 +202,20 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
+	 * @throws  RuntimeException
 	 */
 	public function windowRowNumber($columns, $as = null)
 	{
-		$column = '(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS ' . $this->quoteName('row_init') . ')';
+		if ($this->windowOrder)
+		{
+			throw new RuntimeException("Method 'windowRowNumber' can be called only once per instance.");
+		}
 
 		// Special element to emulate ROW_NUMBER OVER (ORDER BY ...)
 		$this->windowOrder = new JDatabaseQueryElement('ORDER BY', $columns);
 
+		// Add column to count row number
+		$column = '(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS ' . $this->quoteName('row_init') . ')';
 		$this->select($column . ($as === null ? '' : ' AS ' . $as));
 
 		return $this;

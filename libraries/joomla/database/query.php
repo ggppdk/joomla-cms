@@ -157,6 +157,12 @@ abstract class JDatabaseQuery
 	protected $unionAll = null;
 
 	/**
+	 * @var    JDatabaseQueryElement  The windowOrder element.
+	 * @since  __DEPLOY_VERSION__
+	 */
+	protected $windowOrder = null;
+
+	/**
 	 * Magic method to provide method alias support for quote() and quoteName().
 	 *
 	 * @param   string  $method  The called method.
@@ -1812,10 +1818,19 @@ abstract class JDatabaseQuery
 	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
+	 * @throws  RuntimeException
 	 */
 	public function windowRowNumber($columns, $as = null)
 	{
-		$column = 'ROW_NUMBER() OVER (' . ltrim((string) new JDatabaseQueryElement('ORDER BY', $columns)) . ')';
+		if ($this->windowOrder)
+		{
+			throw new RuntimeException("Method 'windowRowNumber' can be called only once per instance.");
+		}
+
+		$this->windowOrder = new JDatabaseQueryElement('ORDER BY', $columns);
+
+		// Add column to count row number
+		$column = 'ROW_NUMBER() OVER (' . ltrim((string) $this->windowOrder) . ')';
 		$this->select($column . ($as === null ? '' : ' AS ' . $as));
 
 		return $this;
