@@ -474,6 +474,7 @@ abstract class JDatabaseQuery
 			case 'select':
 				$this->select = null;
 				$this->type = null;
+				$this->windowOrder = null;
 				break;
 
 			case 'delete':
@@ -558,6 +559,7 @@ abstract class JDatabaseQuery
 			default:
 				$this->type = null;
 				$this->select = null;
+				$this->windowOrder = null;
 				$this->delete = null;
 				$this->update = null;
 				$this->insert = null;
