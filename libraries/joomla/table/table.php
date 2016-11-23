@@ -1356,7 +1356,7 @@ abstract class JTable extends JObject implements JObservableInterface, JTableInt
 
 		$subquery = $this->_db->getQuery(true)
 			->from($this->_tbl)
-			->windowRowNumber('ordering', 'new_ordering');
+			->selectRowNumber('new_ordering', 'ordering');
 
 		$query = $this->_db->getQuery(true)
 			->update($this->_tbl)

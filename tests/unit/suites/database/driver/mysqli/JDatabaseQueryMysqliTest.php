@@ -65,23 +65,22 @@ class JDatabaseQueryMysqliTest extends TestCase
 	}
 
 	/**
-	 * Test for the JDatabaseQueryMysqli::__string method for a 'windowRowNumber' case.
+	 * Test for the JDatabaseQueryMysqli::__string method for a 'selectRowNumber' case.
 	 *
 	 * @return  void
 	 *
 	 * @since   __DEPLOY_VERSION__
 	 */
-	public function test__toStringWindowRowNumber()
+	public function test__toStringSelectRowNumber()
 	{
 		$this->_instance
 			->select('id')
-			->select('ordering')
-			->windowRowNumber('ordering')
+			->selectRowNumber('new_ordering', 'ordering')
 			->from('a')
 			->where('catid = 1');
 
 		$this->assertEquals(
-			PHP_EOL . "SELECT id,ordering,(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS `row_init`)" .
+			PHP_EOL . "SELECT (SELECT @rownum := @rownum + 1 FROM (SELECT @rownum := 0) AS r) AS new_ordering,id,ordering" .
 			PHP_EOL . "FROM a" .
 			PHP_EOL . "WHERE catid = 1" .
 			PHP_EOL . "ORDER BY ordering",
@@ -91,24 +90,22 @@ class JDatabaseQueryMysqliTest extends TestCase
 		$this->_instance
 			->clear('select')
 			->select('id')
-			->select('ordering')
-			->windowRowNumber('ordering', 'row_number')
-			->order('id');
+			->selectRowNumber('row_number', 'ordering', 'catid');
 
 		$this->assertEquals(
-			PHP_EOL . "SELECT * FROM ( " .
-			PHP_EOL . "SELECT id,ordering,(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS `row_init`) AS row_number" .
+			PHP_EOL . "SELECT (SELECT @rownum := IF(@group = CONCAT_WS(',', catid) OR ((@group := CONCAT_WS(',', catid)) AND 0)," .
+			" @rownum + 1, 1) FROM (SELECT @rownum := 0, @group := '') AS r) AS row_number,id,catid,ordering" .
 			PHP_EOL . "FROM a" .
 			PHP_EOL . "WHERE catid = 1" .
-			PHP_EOL . "ORDER BY ordering ) AS `window`" .
-			PHP_EOL . "ORDER BY id",
+			PHP_EOL . "ORDER BY catid,ordering",
 			(string) $this->_instance
 		);
 
 		$this->_instance
 			->clear('select')
 			->select('id')
-			->select('ordering');
+			->select('ordering')
+			->order('id');
 
 		$this->assertEquals(
 			PHP_EOL . "SELECT id,ordering" .

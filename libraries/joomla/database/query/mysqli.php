@@ -37,19 +37,16 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	 */
 	public function __toString()
 	{
-		if ($this->windowOrder)
+		if ($this->selectRowNumber)
 		{
-			$tmpOrder    = $this->order;
-			$this->order = $this->windowOrder;
-			$query       = parent::__toString();
-			$this->order = $tmpOrder;
+			$order = $this->selectRowNumber['orderBy'];
 
-			if ($this->order)
+			if ($this->selectRowNumber['partitionBy'] !== null)
 			{
-				return PHP_EOL . "SELECT * FROM ( $query ) AS " . $this->quoteName('window') . (string) $this->order;
+				$order = $this->selectRowNumber['partitionBy'] . ',' . $order;
 			}
 
-			return $query;
+			return parent::__toString() . PHP_EOL . 'ORDER BY ' . $order;
 		}
 
 		return parent::__toString();
@@ -170,30 +167,37 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	}
 
 	/**
-	 * Return number of the current row, starting from 1
+	 * Return the number of the current row, support for partition, starting from 1
 	 *
-	 * @param   mixed  $columns  A string or array of ordering columns.
-	 * @param   mixed  $as       The AS query part associated to generated column.
-	 *                           If is null there will not be any AS part for generated column.
+	 * @param   string  $alias        The AS query part associated to generated column.
+	 *                                If is null there will not be any AS part for generated column.
+	 * @param   string  $orderBy      An expression of ordering for window function.
+	 * @param   string  $partitionBy  An expression of grouping for window function.
 	 *
 	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
 	 * @throws  RuntimeException
 	 */
-	public function windowRowNumber($columns, $as = null)
+	public function selectRowNumber($alias, $orderBy, $partitionBy = null)
 	{
-		if ($this->windowOrder)
+		$this->validateRowNumber($alias, $orderBy, $partitionBy);
+
+		if ($partitionBy === null)
 		{
-			throw new RuntimeException("Method 'windowRowNumber' can be called only once per instance.");
+			$column = "(SELECT @rownum := @rownum + 1 FROM (SELECT @rownum := 0) AS r) AS $alias";
+		}
+		else
+		{
+			$column = "(SELECT @rownum := IF(@group = CONCAT_WS(',', $partitionBy)"
+				. " OR ((@group := CONCAT_WS(',', $partitionBy)) AND 0), @rownum + 1, 1)"
+				. " FROM (SELECT @rownum := 0, @group := '') AS r) AS $alias";
 		}
 
-		// Special element to emulate ROW_NUMBER OVER (ORDER BY ...)
-		$this->windowOrder = new JDatabaseQueryElement('ORDER BY', $columns);
+		$elements = $this->select->getElements();
+		array_unshift($elements, $column);
 
-		// Add column to count row number
-		$column = '(SELECT @a := @a + 1 FROM (SELECT @a := 0) AS ' . $this->quoteName('row_init') . ')';
-		$this->select($column . ($as === null ? '' : ' AS ' . $as));
+		$this->select = new JDatabaseQueryElement('SELECT', $elements);
 
 		return $this;
 	}

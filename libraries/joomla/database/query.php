@@ -157,10 +157,10 @@ abstract class JDatabaseQuery
 	protected $unionAll = null;
 
 	/**
-	 * @var    JDatabaseQueryElement  The windowOrder element.
+	 * @var    array  Details of window function.
 	 * @since  __DEPLOY_VERSION__
 	 */
-	protected $windowOrder = null;
+	protected $selectRowNumber = null;
 
 	/**
 	 * Magic method to provide method alias support for quote() and quoteName().
@@ -245,6 +245,12 @@ abstract class JDatabaseQuery
 				if ($this->where)
 				{
 					$query .= (string) $this->where;
+				}
+
+				if ($this->selectRowNumber)
+				{
+					// RowNumber does not use below clauses
+					break;
 				}
 
 				if ($this->group)
@@ -474,7 +480,7 @@ abstract class JDatabaseQuery
 			case 'select':
 				$this->select = null;
 				$this->type = null;
-				$this->windowOrder = null;
+				$this->selectRowNumber = null;
 				break;
 
 			case 'delete':
@@ -559,7 +565,7 @@ abstract class JDatabaseQuery
 			default:
 				$this->type = null;
 				$this->select = null;
-				$this->windowOrder = null;
+				$this->selectRowNumber = null;
 				$this->delete = null;
 				$this->update = null;
 				$this->insert = null;
@@ -1806,34 +1812,85 @@ abstract class JDatabaseQuery
 	}
 
 	/**
-	 * Return number of the current row, starting from 1
+	 * Validate arguments which are passed to selectRowNumber method and set up common variables.
+	 *
+	 * @param   string  $alias        The AS query part associated to generated column.
+	 *                                If is null there will not be any AS part for generated column.
+	 * @param   string  $orderBy      An expression of ordering for window function.
+	 * @param   string  $partitionBy  An expression of grouping for window function.
+	 *
+	 * @return  void
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 * @throws  RuntimeException
+	 */
+	protected function validateRowNumber($alias, $orderBy, $partitionBy = null)
+	{
+		if ($this->selectRowNumber)
+		{
+			throw new RuntimeException("Method 'selectRowNumber' can be called only once per instance.");
+		}
+
+		// Required by sqlite
+		if ($partitionBy !== null)
+		{
+			if (strpos($partitionBy, '.') !== false)
+			{
+				throw new RuntimeException("Partition By clause can not contain a dot.");
+			}
+
+			$this->select($partitionBy);
+		}
+
+		// Required by sqlite
+		if ($orderBy !== null)
+		{
+			if (strpos($orderBy, '.') !== false)
+			{
+				throw new RuntimeException("Order By clause can not contain a dot.");
+			}
+
+			$this->select($orderBy);
+		}
+
+		$this->selectRowNumber = array('alias' => $alias, 'orderBy' => $orderBy, 'partitionBy' => $partitionBy);
+	}
+
+	/**
+	 * Return the number of the current row, support for partition, starting from 1
 	 *
 	 * Usage:
-	 * $query->select('id, ordering');
-	 * $query->windowRowNumber('ordering', 'new_ordering');
-	 * $query->order('id'); // optional
+	 * $query->selectRowNumber('new_ordering', 'ordering ASC', 'catid');
+	 * $query->select('id');
+	 * $query->from('#__content');
 	 *
-	 * @param   mixed  $columns  A string or array of ordering columns for window function.
-	 * @param   mixed  $as       The AS query part associated to generated column.
-	 *                           If is null there will not be any AS part for generated column.
+	 * @param   string  $alias        The AS query part associated to generated column.
+	 *                                If is null there will not be any AS part for generated column.
+	 * @param   string  $orderBy      An expression of ordering for window function.
+	 * @param   string  $partitionBy  An expression of grouping for window function.
 	 *
 	 * @return  JDatabaseQuery  Returns this object to allow chaining.
 	 *
 	 * @since   __DEPLOY_VERSION__
 	 * @throws  RuntimeException
 	 */
-	public function windowRowNumber($columns, $as = null)
+	public function selectRowNumber($alias, $orderBy, $partitionBy = null)
 	{
-		if ($this->windowOrder)
+		$this->validateRowNumber($alias, $orderBy, $partitionBy);
+
+		$column = "ROW_NUMBER() OVER (";
+
+		if ($partitionBy !== null)
 		{
-			throw new RuntimeException("Method 'windowRowNumber' can be called only once per instance.");
+			$column .= "PARTITION BY $partitionBy ";
 		}
 
-		$this->windowOrder = new JDatabaseQueryElement('ORDER BY', $columns);
+		$column .= "ORDER BY $orderBy) AS $alias";
 
-		// Add column to count row number
-		$column = 'ROW_NUMBER() OVER (' . ltrim((string) $this->windowOrder) . ')';
-		$this->select($column . ($as === null ? '' : ' AS ' . $as));
+		$elements = $this->select->getElements();
+		array_unshift($elements, $column);
+
+		$this->select = new JDatabaseQueryElement('SELECT', $elements);
 
 		return $this;
 	}

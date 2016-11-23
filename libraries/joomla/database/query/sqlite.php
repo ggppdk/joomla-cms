@@ -273,4 +273,61 @@ class JDatabaseQuerySqlite extends JDatabaseQueryPdo implements JDatabaseQueryPr
 	{
 		return 'CURRENT_TIMESTAMP';
 	}
+
+	/**
+	 * Magic function to convert the query to a string.
+	 *
+	 * @return  string  The completed query.
+	 *
+	 * @since   11.1
+	 */
+	public function __toString()
+	{
+		if ($this->selectRowNumber)
+		{
+			$alias       = $this->selectRowNumber['alias'];
+			$order       = $this->selectRowNumber['orderBy'];
+			$partitionBy = $this->selectRowNumber['partitionBy'];
+
+			if ($partitionBy !== null)
+			{
+				$order  = $partitionBy . ',' . $order;
+				$column = "ROW_NUMBER(NULL,$partitionBy) AS $alias";
+			}
+			else
+			{
+				$column = "ROW_NUMBER() AS $alias";
+			}
+
+			$query = parent::__toString() . PHP_EOL . "ORDER BY $order";
+
+			return PHP_EOL . "SELECT $column,w.*"
+				. PHP_EOL . "FROM ( $query ) AS w,"
+				. PHP_EOL . "( SELECT ROW_NUMBER(0) ) AS r"
+				// Forbid to flatten subqueries.
+				. PHP_EOL . "ORDER BY NULL";
+		}
+
+		return parent::__toString();
+	}
+
+	/**
+	 * Return the number of the current row, support for partition, starting from 1
+	 *
+	 * @param   string  $alias        The AS query part associated to generated column.
+	 *                                If is null there will not be any AS part for generated column.
+	 * @param   string  $orderBy      An expression of ordering for window function.
+	 * @param   string  $partitionBy  An expression of grouping for window function.
+	 *
+	 * @return  JDatabaseQuery  Returns this object to allow chaining.
+	 *
+	 * @since   __DEPLOY_VERSION__
+	 * @throws  RuntimeException
+	 */
+	public function selectRowNumber($alias, $orderBy, $partitionBy = null)
+	{
+		$this->validateRowNumber($alias, $orderBy, $partitionBy);
+
+		return $this;
+	}
 }

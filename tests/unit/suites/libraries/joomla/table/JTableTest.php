@@ -710,8 +710,6 @@ class JTableTest extends TestCaseDatabase
 
 		$this->assertEquals(25, $object2->ordering, 'Preconditions');
 
-		static::markTestSkipped('The SQLite driver does not support multi-table update syntax.');
-
 		$this->object->reorder();
 
 		$object2->load(array('id1' => 25, 'id2' => 51));
