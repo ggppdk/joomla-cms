@@ -1850,7 +1850,8 @@ abstract class JDatabaseQuery
 				throw new RuntimeException("Order By clause can not contain a dot.");
 			}
 
-			$this->select($orderBy);
+			$orderBy_alias = $alias . "_" . $orderBy;
+			$this->select($orderBy . " AS " . $orderBy_alias);
 		}
 
 		$this->selectRowNumber = array('alias' => $alias, 'orderBy' => $orderBy, 'partitionBy' => $partitionBy);
@@ -1885,7 +1886,8 @@ abstract class JDatabaseQuery
 			$column .= "PARTITION BY $partitionBy ";
 		}
 
-		$column .= "ORDER BY $orderBy) AS $alias";
+		$orderBy_alias = $alias . "_" . $orderBy;
+		$column .= "ORDER BY $orderBy_alias) AS $alias";
 
 		$elements = $this->select->getElements();
 		array_unshift($elements, $column);
