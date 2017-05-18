@@ -174,13 +174,17 @@ class JDatabaseQueryMysqli extends JDatabaseQuery implements JDatabaseQueryLimit
 	 * Usage:
 	 * $query->Rand();
 	 * 
+	 * @param   string  $seed An integer to seed the randomizer
+	 *
 	 * @return  string  The correct rand function.
 	 *
 	 * @since   3.5
 	 */
-	public function Rand()
+	public function Rand($seed=null)
 	{
-		return ' RAND() ';
+		return $seed===null
+			? ' RAND() '
+			: ' RAND('.(int)$seed.')';
 	}
 
 	/**
