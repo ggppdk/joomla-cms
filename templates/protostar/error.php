@@ -144,7 +144,7 @@ else
 								</ul>
 							</div>
 							<div class="span6">
-								<?php if (JModuleHelper::getModule('mod_search')) : ?>
+								<?php if (JFactory::getDocument() instanceof Joomla\CMS\Document\HtmlDocument && JModuleHelper::getModule('mod_search')) : ?>
 									<p><strong><?php echo JText::_('JERROR_LAYOUT_SEARCH'); ?></strong></p>
 									<p><?php echo JText::_('JERROR_LAYOUT_SEARCH_PAGE'); ?></p>
 									<?php $module = JModuleHelper::getModule('mod_search'); ?>
