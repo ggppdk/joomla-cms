@@ -36,6 +36,31 @@ JFactory::getDocument()->addScriptDeclaration(
 				cm.getOption('fullScreen') && cm.setOption('fullScreen', false);
 			};
 
+			cm.keyMap.default['Tab'] = function (cm) {
+				if (cm.somethingSelected())
+				{
+					var sel = cm.getSelection('\\\n');
+					// Indent only if there are multiple lines selected, or if the selection spans a full line
+					if (sel.length > 0 && (sel.indexOf('\\\n') > -1 || sel.length === cm.getLine(cm.getCursor().line).length))
+					{
+						cm.indentSelection('add');
+						return;
+					}
+				}
+
+				if (cm.options.indentWithTabs)
+				{
+					cm.execCommand('insertTab');
+				}
+				else
+				{
+					cm.execCommand('insertSoftTab');
+				}
+			};
+			cm.keyMap.default['Shift-Tab'] = function (cm) {
+				cm.indentSelection('subtract');
+			};
+
 			cm.keyMap.default['Ctrl-Q'] = 'toggleFullScreen';
 			cm.keyMap.default[$fsCombo] = 'toggleFullScreen';
 			cm.keyMap.default['Esc'] = 'closeFullScreen';
@@ -55,6 +80,8 @@ JFactory::getDocument()->addScriptDeclaration(
 				{
 					editor.setOption('mode', mode.mode);
 				}
+				editor.setOption('indentWithTabs', true);
+				editor.setOption('tabSize', 2);
 
 				// Handle gutter clicks (place or remove a marker).
 				editor.on('gutterClick', function (ed, n, gutter) {
