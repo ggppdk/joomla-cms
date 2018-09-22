@@ -170,11 +170,6 @@ class TagsModelTags extends JModelList
 			->select('ug.title AS access_title')
 			->join('LEFT', '#__viewlevels AS ug on ug.id = a.access');
 
-		// Filter on the level.
-		if ($level = $this->getState('filter.level'))
-		{
-			$query->where('a.level <= ' . (int) $level);
-		}
 
 		// Filter on the level.
 		$parentId = $this->getState('filter.parent_id');
@@ -197,6 +192,12 @@ class TagsModelTags extends JModelList
 
 			// Add the subquery to the main query
 			$query->where('(a.parent_id = ' . (int) $parentId . ' OR a.parent_id IN (' . (string) $subQuery . '))');
+		}
+
+		// Filter on the level.
+		elseif ($level = $this->getState('filter.level'))
+		{
+			$query->where('a.level <= ' . (int) $level);
 		}
 
 		// Filter by access level.
