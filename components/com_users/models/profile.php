@@ -197,7 +197,6 @@ class UsersModelProfile extends JModelForm
 			$form->setFieldAttribute('username', 'validate', '');
 			$form->setFieldAttribute('username', 'message', '');
 			$form->setFieldAttribute('username', 'readonly', 'true');
-			$form->setFieldAttribute('username', 'required', 'false');
 		}
 
 		// When multilanguage is set, a user's default site language should also be a Content Language
